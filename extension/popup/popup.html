@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard V2</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Loading state (shown while fetching result from service worker) -->
+  <div class="container" id="loadingState">
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">PhishGuard</span>
+        <span class="version-badge">V2</span>
+      </div>
+    </div>
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <span class="loading-text">Analysing page...</span>
+    </div>
+  </div>
+
+  <!-- Main result view (hidden until data arrives) -->
+  <div class="container" id="mainView" style="display: none;">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">PhishGuard</span>
+        <span class="version-badge">V2</span>
+      </div>
+      <div class="status-dot" id="statusDot" title="Extension active"></div>
+    </header>
+
+    <!-- Risk Gauge -->
+    <section class="gauge-section">
+      <div class="gauge-wrapper">
+        <svg class="gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+          <!-- Gradient definition -->
+          <defs>
+            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" id="gradStop1" stop-color="#10b981"/>
+              <stop offset="100%" id="gradStop2" stop-color="#10b981"/>
+            </linearGradient>
+          </defs>
+          <!-- Background track -->
+          <circle class="gauge-track" cx="60" cy="60" r="52"/>
+          <!-- Animated fill -->
+          <circle class="gauge-fill" id="gaugeFill" cx="60" cy="60" r="52"
+                  stroke="url(#gaugeGradient)"/>
+        </svg>
+        <div class="gauge-center">
+          <span class="gauge-score" id="gaugeScore">--</span>
+          <span class="gauge-label">Risk Score</span>
+        </div>
+      </div>
+
+      <!-- Verdict Badge -->
+      <div class="verdict-container">
+        <span class="verdict-text scanning" id="verdictBadge">Scanning</span>
+      </div>
+
+      <!-- URL Display -->
+      <div class="url-display" id="currentUrl" title="">—</div>
+    </section>
+
+    <!-- Scan Info Chips -->
+    <section class="scan-info" id="scanInfo">
+      <div class="info-chip">
+        <span class="chip-icon">⏱</span>
+        <span class="chip-value" id="scanDuration">—</span>
+      </div>
+      <div class="info-chip">
+        <span class="chip-icon">🎯</span>
+        <span>URL Score: </span>
+        <span class="chip-value" id="urlScoreChip">—</span>
+      </div>
+      <div class="info-chip">
+        <span class="chip-icon">📄</span>
+        <span>DOM Score: </span>
+        <span class="chip-value" id="domScoreChip">—</span>
+      </div>
+    </section>
+
+    <!-- AI Warning (Only populated if backend is connected) -->
+    <section class="ai-warning-section" id="aiWarningSection" style="display: none; background: rgba(255, 60, 60, 0.1); border-left: 4px solid #ff3c3c; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+      <div style="font-weight: 600; color: #ff3c3c; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+        <span>🤖</span> AI SOC Analyst Warning
+      </div>
+      <div id="aiWarningText" style="font-size: 12px; color: #e2e8f0; line-height: 1.4;">
+        <!-- Populated by popup.js -->
+      </div>
+    </section>
+
+    <!-- Detection Signals -->
+    <section class="features-section" id="featuresSection">
+      <div class="section-header">
+        <span class="section-title">Detection Signals</span>
+        <span class="feature-count" id="featureCount">0 signals</span>
+      </div>
+      <div class="features-list" id="featuresList">
+        <!-- Populated by popup.js -->
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="actions-section">
+      <button class="btn" id="rescanBtn" title="Re-analyse current page">
+        <span class="btn-icon">🔄</span>
+        Re-scan
+      </button>
+      <button class="btn" id="detailsBtn" title="View feature engine details">
+        <span class="btn-icon">📊</span>
+        Details
+      </button>
+      <button class="btn" id="reportBtn" title="Report incorrect result">
+        <span class="btn-icon">🚩</span>
+        Report
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="footer-text">🛡️ PhishGuard V2 · Local AI Detection · No data leaves your browser</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

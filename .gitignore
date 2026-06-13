@@ -1,0 +1,43 @@
+# Models (tracked separately via DVC or LFS)
+ml_pipeline/models/*.json
+ml_pipeline/models/*.joblib
+ml_pipeline/models/phishbert/
+results/
+runs/
+!ml_pipeline/models/.gitkeep
+
+# Training data
+ml_pipeline/data/*.csv
+ml_pipeline/data/*.parquet
+!ml_pipeline/data/.gitkeep
+
+# Training outputs
+ml_pipeline/outputs/
+
+# Environment
+.env
+.venv/
+venv/
+venv_gpu/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+node_modules/
+*.log
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

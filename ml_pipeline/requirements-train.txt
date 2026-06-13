@@ -1,0 +1,18 @@
+# ml_pipeline/requirements-train.txt
+# Install in addition to base requirements.txt when running train.py
+#
+# Core ML
+optuna==3.6.1
+matplotlib==3.9.0
+seaborn==0.13.2
+scipy==1.13.1
+shap>=0.45.0
+
+# Feature extraction (network lookups)
+python-whois==0.9.4
+googlesearch-python==1.2.3
+requests>=2.31.0
+
+# Dataset pipeline
+pandas>=2.0.0
+numpy>=1.24.0
