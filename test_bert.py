@@ -1,24 +1,20 @@
+"""Manual smoke check of the backend predictor. Run from backend/: python ../test_bert.py"""
 import sys
 import logging
 logging.basicConfig(level=logging.INFO)
 sys.path.append('.')
+sys.path.append('..')
 from app.services.predictor import PhishingPredictor
 
 predictor = PhishingPredictor(
-    url_model_path="../ml_pipeline/models/xgboost.json",
-    dom_model_path="../ml_pipeline/models/random_forest.joblib"
+    url_model_path="../ml_pipeline/models/xgboost.json"
 )
 predictor.load()
-print(f"BERT MODEL LOADED: {predictor._bert_model is not None}")
 
-test_urls = [
+for url in [
     "http://example.com/login",
     "https://google.com",
     "http://secure-update-paypal-account.com/login.php",
     "https://amazon-support-ticket-update.net/auth",
-]
-
-for url in test_urls:
-    print(f"URL: {url}")
-    print(f"Prediction: {predictor.predict_url(url)}")
-    print("-" * 50)
+]:
+    print(url, "→", predictor.predict_url(url))

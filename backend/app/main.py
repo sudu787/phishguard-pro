@@ -63,10 +63,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("Loading ML models...")
     t0 = time.perf_counter()
-    predictor = PhishingPredictor(
-        url_model_path=settings.URL_MODEL_PATH,
-        dom_model_path=settings.DOM_MODEL_PATH,
-    )
+    predictor = PhishingPredictor(url_model_path=settings.URL_MODEL_PATH)
     predictor.load()
     logger.info(f"Models loaded in {(time.perf_counter()-t0)*1000:.1f}ms")
 
@@ -182,6 +179,7 @@ class DOMFeatures(BaseModel):
     has_status_bar_customization: int = Field(0, ge=0, le=1)
     page_size_bytes: int = Field(0, ge=0)
     dom_depth: int = Field(0, ge=0)
+    page_text: str = Field("", max_length=4000)  # title | visible text, first 2,000 chars (content.js)
 
 
 class FullRequest(BaseModel):
@@ -398,7 +396,7 @@ async def predict_scan(request: Request, body: FullRequest):
                 "top_features": ml_result.get("top_features", [])
             },
             "domain_intel": domain_result,
-            "html_analysis": body.dom_features.model_dump(),
+            "html_analysis": body.dom_features.model_dump(exclude={"page_text"}),  # page text never leaves for the LLM
             "vision_analysis": {}
         }
         

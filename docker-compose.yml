@@ -14,7 +14,6 @@ services:
     environment:
       - DEBUG=false
       - URL_MODEL_PATH=/app/ml_pipeline/models/url_xgboost.json
-      - DOM_MODEL_PATH=/app/ml_pipeline/models/dom_rf.joblib
       - OPENPHISH_FEED_URL=https://openphish.com/feed.txt
       - INTEL_CACHE_TTL=3600
       # Set your actual Chrome Extension ID after first load

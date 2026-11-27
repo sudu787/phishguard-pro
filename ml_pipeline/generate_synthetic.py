@@ -382,7 +382,7 @@ def generate_featured_dataset(
     raw_df = gen.generate_dataset(total_count, phishing_ratio)
 
     logger.info(f"Extracting features for {len(raw_df)} URLs...")
-    extractor = URLFeatureExtractor(use_network=False)
+    extractor = URLFeatureExtractor()
 
     features_list = []
     errors = 0
@@ -412,7 +412,7 @@ def generate_featured_dataset(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Save full dataset (features + label)
-    output_cols = URL_FEATURE_COLUMNS + ["label"]
+    output_cols = URL_FEATURE_COLUMNS + ["label", "url"]
     featured_df[output_cols].to_csv(out_path, index=False)
     logger.info(f"💾 Saved featured dataset → {out_path} ({len(featured_df)} rows)")
 
