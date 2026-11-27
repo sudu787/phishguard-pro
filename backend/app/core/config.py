@@ -29,11 +29,15 @@ class Settings(BaseSettings):
 
     # ── Model paths ───────────────────────────────────────────────────────────
     URL_MODEL_PATH: str = "../ml_pipeline/models/xgboost.json"
-    DOM_MODEL_PATH: str = "../ml_pipeline/models/random_forest.joblib"
 
     # ── Scoring thresholds ────────────────────────────────────────────────────
+    # Fallback only: train.py writes calibrated ones to <model>_thresholds.json.
     PHISHING_THRESHOLD: float = 0.65
     SUSPICIOUS_THRESHOLD: float = 0.40
+
+    # ── Top-sites allowlist (Tranco list: rank,domain — .csv or .csv.zip) ───────
+    TRANCO_PATH: str = "../ml_pipeline/data/raw/tranco_top1m.csv.zip"
+    TRANCO_ALLOWLIST_TOP: int = 10_000   # 0 disables the allowlist
 
     # ── Threat intel ──────────────────────────────────────────────────────────
     OPENPHISH_FEED_URL: str = "https://openphish.com/feed.txt"

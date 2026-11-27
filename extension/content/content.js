@@ -221,6 +221,10 @@ function extractDOMFeatures() {
   features.page_size_bytes = (document.documentElement?.innerHTML || '').length;
   features.dom_depth = _getDOMDepth(document.body, 0);
 
+  // ── 10. Page text for the Tier 2 page model (same "title | text" form as fetch_phreshphish_html.py)
+  const visible = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
+  features.page_text = `${(document.title || '').trim()} | ${visible}`.substring(0, 2000);
+
   // ── Performance logging ─────────────────────────────────────────────────
   const elapsed = Math.round(performance.now() - t0);
   if (elapsed > 50) {

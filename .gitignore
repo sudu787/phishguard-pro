@@ -2,6 +2,7 @@
 ml_pipeline/models/*.json
 ml_pipeline/models/*.joblib
 ml_pipeline/models/phishbert/
+ml_pipeline/models/pagebert*/
 results/
 runs/
 !ml_pipeline/models/.gitkeep
@@ -9,6 +10,9 @@ runs/
 # Training data
 ml_pipeline/data/*.csv
 ml_pipeline/data/*.parquet
+ml_pipeline/data/raw/
+ml_pipeline/data/phreshphish/
+ml_pipeline/data/checkpoints/
 !ml_pipeline/data/.gitkeep
 
 # Training outputs

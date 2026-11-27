@@ -30,6 +30,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV HF_HUB_OFFLINE=1
 
 # Copy application source
 COPY backend/app ./app

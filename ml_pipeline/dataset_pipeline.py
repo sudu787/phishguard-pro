@@ -422,12 +422,8 @@ class DataCleaner:
 
     def _is_whitelisted(self, url: str) -> bool:
         """Check if URL belongs to a known-legitimate domain."""
-        try:
-            hostname = urlparse(url).hostname or ""
-            hostname = hostname.lower().lstrip("www.")
-            return hostname in self.WHITELIST_DOMAINS
-        except Exception:
-            return False
+        from ml_pipeline.features import registered_domain
+        return registered_domain(url) in self.WHITELIST_DOMAINS
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -505,15 +501,8 @@ class Deduplicator:
             return url
 
     def _extract_domain(self, url: str) -> str:
-        try:
-            hostname = urlparse(url).hostname or ""
-            # Extract registered domain (eTLD+1 approximation)
-            parts = hostname.lower().split(".")
-            if len(parts) >= 2:
-                return ".".join(parts[-2:])
-            return hostname
-        except Exception:
-            return ""
+        from ml_pipeline.features import registered_domain
+        return registered_domain(url)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -588,14 +577,8 @@ class FeatureGenerator:
     """
     Extract ML features from URLs using the existing URLFeatureExtractor.
 
-    Two modes:
-      - FAST (use_network=False): ~0.1ms per URL, offline features only
-        32 features from URL string analysis
-      - FULL (use_network=True): ~2s per URL, includes WHOIS/DNS/SSL
-        32 features + network-dependent features populated
-
-    For initial pipeline development, FAST mode is recommended.
-    Switch to FULL mode for the final production training dataset.
+    Offline URL-string features only (~0.1ms per URL) — the same ones the
+    backend computes at inference time, so there is no train/serve skew.
 
     Anti-leakage guarantee:
       Feature extraction is STATELESS — each URL is processed independently.
@@ -607,14 +590,13 @@ class FeatureGenerator:
     def generate(
         self,
         df: pd.DataFrame,
-        use_network: bool = False,
         batch_size: int = 500,
     ) -> pd.DataFrame:
         """Extract features for all URLs. Returns DataFrame with feature columns + label."""
         from ml_pipeline.features import URLFeatureExtractor, URL_FEATURE_COLUMNS
 
-        logger.info(f"⚙️  Stage 5: Feature extraction ({'FULL' if use_network else 'FAST'} mode)...")
-        extractor = URLFeatureExtractor(use_network=use_network)
+        logger.info("⚙️  Stage 5: Feature extraction...")
+        extractor = URLFeatureExtractor()
 
         total = len(df)
         all_features = []
@@ -809,23 +791,8 @@ class AntiLeakSplitter:
         return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
     def _get_registered_domain(self, url: str) -> str:
-        """Extract the registered domain (eTLD+1 approximation)."""
-        try:
-            hostname = urlparse(url).hostname or ""
-            parts = hostname.lower().replace("www.", "").split(".")
-            if len(parts) >= 2:
-                # Handle common 2-part TLDs (co.uk, com.au, etc.)
-                two_part_tlds = {
-                    "co.uk", "com.au", "co.in", "com.br", "co.jp", "co.kr",
-                    "com.sg", "com.hk", "co.za", "com.mx", "com.tr", "co.nz",
-                    "org.uk", "net.au", "ac.uk", "gov.uk",
-                }
-                if len(parts) >= 3 and f"{parts[-2]}.{parts[-1]}" in two_part_tlds:
-                    return ".".join(parts[-3:])
-                return ".".join(parts[-2:])
-            return hostname
-        except Exception:
-            return ""
+        from ml_pipeline.features import registered_domain
+        return registered_domain(url)
 
     def _log_split_stats(self, train_df: pd.DataFrame, test_df: pd.DataFrame):
         """Log train/test split statistics."""
@@ -979,7 +946,6 @@ class DatasetPipeline:
     def run(
         self,
         skip_download: bool = False,
-        use_network_features: bool = False,
         test_size: float = 0.2,
         temporal_split: bool = False,
         max_phishing: Optional[int] = None,
@@ -1027,7 +993,7 @@ class DatasetPipeline:
         self._save_checkpoint(labeled_df, "04_labeled.csv")
 
         # ── Stage 5: Feature extraction ────────────────────────────────────
-        featured_df = self.feature_gen.generate(labeled_df, use_network=use_network_features)
+        featured_df = self.feature_gen.generate(labeled_df)
         self._save_checkpoint(featured_df, "05_featured.csv")
 
         # ── Stage 6: Split ─────────────────────────────────────────────────
@@ -1040,7 +1006,7 @@ class DatasetPipeline:
         # Save final train/test CSVs (ready for train.py)
         from ml_pipeline.features import URL_FEATURE_COLUMNS
         feature_cols = [c for c in URL_FEATURE_COLUMNS if c in train_df.columns]
-        output_cols = feature_cols + ["label"]
+        output_cols = feature_cols + ["label", "url"]  # url: lets train.py group CV folds by domain
 
         # Also save metadata columns separately (url, source — not for ML)
         meta_cols = ["url", "source", "label"]
@@ -1103,13 +1069,10 @@ Examples:
   # Temporal split (requires PhishTank timestamps)
   python -m ml_pipeline.dataset_pipeline --output ml_pipeline/data --temporal-split
 
-  # Full features (SLOW — includes WHOIS/DNS lookups)
-  python -m ml_pipeline.dataset_pipeline --output ml_pipeline/data --full-features
         """,
     )
     parser.add_argument("--output", default="ml_pipeline/data", help="Output directory")
     parser.add_argument("--skip-download", action="store_true", help="Skip data download (use cached)")
-    parser.add_argument("--full-features", action="store_true", help="Use network features (WHOIS/DNS — slow)")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test split fraction (default: 0.2)")
     parser.add_argument("--temporal-split", action="store_true", help="Use temporal split (train=older, test=newer)")
     parser.add_argument("--max-phishing", type=int, default=None, help="Max phishing samples")
@@ -1125,7 +1088,6 @@ def main():
     pipeline = DatasetPipeline(output_dir=args.output)
     pipeline.run(
         skip_download=args.skip_download,
-        use_network_features=args.full_features,
         test_size=args.test_size,
         temporal_split=args.temporal_split,
         max_phishing=args.max_phishing,
